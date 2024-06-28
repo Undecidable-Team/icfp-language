@@ -10,6 +10,7 @@ common defaults
     DeriveAnyClass
     DerivingStrategies
     LambdaCase
+    OverloadedStrings
 
 common warnings
   ghc-options:
@@ -21,6 +22,7 @@ library
   import:          defaults, warnings
   exposed-modules: Lib
                  , Types
+                 , Eval
   build-depends:   base >=4.7 && <5
                  , text >=2.1
   hs-source-dirs:  src
@@ -42,3 +44,7 @@ test-suite icfp-language-test
   build-depends:
     , base           >=4.7 && <5
     , icfp-language
+    , tasty >= 1.5
+    , tasty-hunit >= 0.10
+    , tasty-quickcheck >= 0.11
+    , QuickCheck >= 2.15
