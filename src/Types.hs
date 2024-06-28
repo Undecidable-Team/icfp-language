@@ -11,7 +11,7 @@ data Expr
   | VUnary UnOp Expr
   | VBinary BiOp Expr Expr
   | VIf Expr Expr Expr
-  | VLam Expr
+  | VLam Name Expr
   | VVar Name
   | VOther -- for the future
   deriving (Eq,Show,Read)
