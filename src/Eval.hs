@@ -58,7 +58,7 @@ intToStr = T.reverse . T.unfoldr step
 evalBin :: Env -> BiOp -> Expr -> Expr -> Expr
 evalBin env op e1 e2 = case (op, eval env e1, eval env e2) of
   (OpAdd, VInt n1, VInt n2)	-> VInt (n1 + n2)
-  (OpAdd, VInt n1, VInt n2)	-> VInt (n1 - n2)
+  (OpSub, VInt n1, VInt n2)	-> VInt (n1 - n2)
   (OpMul, VInt n1, VInt n2)	-> VInt (n1 * n2)
   (OpDiv, VInt n1, VInt n2)	-> VInt (n1 `div` n2)
   (OpMod, VInt n1, VInt n2)	-> VInt (n1 `mod` n2)
