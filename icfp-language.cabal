@@ -27,7 +27,7 @@ executable icfp-language
   import:         defaults, warnings
   main-is:        Main.hs
   build-depends:
-    , base      >=4.7 && <5
+    , base           >=4.7 && <5
     , icfp-language
 
   hs-source-dirs: app
@@ -38,5 +38,5 @@ test-suite icfp-language-test
   hs-source-dirs: test
   main-is:        Main.hs
   build-depends:
-    , base      ^>=4.17.2.1
+    , base           >=4.7 && <5
     , icfp-language
