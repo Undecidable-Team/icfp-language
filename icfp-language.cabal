@@ -1,0 +1,42 @@
+cabal-version: 3.0
+name:          icfp-language
+version:       0.0.0.0
+build-type:    Simple
+
+common defaults
+  default-language:   GHC2021
+  default-extensions:
+    BlockArguments
+    DeriveAnyClass
+    DerivingStrategies
+    LambdaCase
+
+common warnings
+  ghc-options:
+    -Wall -Wextra -Weverything -Wcompat -Wno-implicit-prelude
+    -Wno-unsafe -Wno-missing-safe-haskell-mode
+    -Wno-missing-local-signatures -Wno-missing-import-lists -haddock
+
+library
+  import:          defaults, warnings
+  exposed-modules: Lib
+  build-depends:   base >=4.7 && <5
+  hs-source-dirs:  src
+
+executable icfp-language
+  import:         defaults, warnings
+  main-is:        Main.hs
+  build-depends:
+    , base      >=4.7 && <5
+    , icfp-language
+
+  hs-source-dirs: app
+
+test-suite icfp-language-test
+  import:         defaults, warnings
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is:        Main.hs
+  build-depends:
+    , base      ^>=4.17.2.1
+    , icfp-language
