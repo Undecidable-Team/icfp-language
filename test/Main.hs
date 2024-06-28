@@ -22,7 +22,7 @@ evalTests = testGroup "Eval"
   ]
 
 strToIntTests = testGroup "strToInt"
-  [ testCase "spec: S4%34" $ strToInt "S4%34" @?= 15818151 ]
+  [ testCase "spec: S4%34" $ strToInt "4%34" @?= 15818151 ]
 
 intToStrTests = testGroup "intToStr"
   [ testCase "spec: I4%34" $ intToStr 15818151 @?= "test" ]

@@ -2,6 +2,7 @@ module Eval where
 
 import Types
 
+import Data.Char (ord, chr)
 import Data.Text (Text)
 import Data.Text qualified as T
 
@@ -44,10 +45,14 @@ evalUn env op expr = case (op, eval env expr) of
   _ -> error "Invalid type: Not an unary operation."
 
 strToInt :: Text -> Integer
-strToInt s = 0
+strToInt = T.foldl step 0
+  where step x c = x*94 + toInteger (ord c - 33)
 
 intToStr :: Integer -> Text
-intToStr x = ""
+intToStr = T.reverse . T.unfoldr step
+  where step = \case
+          0 -> Nothing
+          x -> Just (chr $ fromInteger $ 33 + x`mod`94, x`div`94)
 
 -- Evaluates Binary Operations
 evalBin :: Env -> BiOp -> Expr -> Expr -> Expr
