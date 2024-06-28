@@ -18,15 +18,16 @@ evalBool :: Env -> Expr -> Bool
 evalBool env expr = case expr of
   VBool b	-> b
   VUnary op e1 -> case op of
-    OpNot	-> not (evalBool env e1)
+    OpNot -> not (evalBool env e1)
+    _ -> error "Unsupported Boolean unary operator."
   VBinary op e1 e2 -> case op of
     OpAnd -> evalBool env e1 && evalBool env e2
-    OpOr	-> evalBool env e1 || evalBool env e2
-    OpLT	-> evalInt env e1 < evalInt env e2
-    OpGT	-> evalInt env e1 > evalInt env e2
-    OpEQ	-> eval env e1 == eval env e2
-    _	-> error "Unsupported Boolean operator."
-evalBool _ _ = error "Invalid boolean expression."
+    OpOr  -> evalBool env e1 || evalBool env e2
+    OpLT  -> evalInt env e1 < evalInt env e2
+    OpGT  -> evalInt env e1 > evalInt env e2
+    OpEQ  -> eval env e1 == eval env e2
+    _ -> error "Unsupported Boolean operator."
+  _ -> error "Invalid boolean expression."
 
 -- Evaluates Integer expressions
 evalInt :: Env -> Expr -> Integer -- Note that `Int' only uses fixed-precision ones, while `Integer' type has arbitrary-precision.
