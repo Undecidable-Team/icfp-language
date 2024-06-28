@@ -6,9 +6,10 @@ import Types (BiOp (..), Expr (..), Name (..), UnOp (..))
 
 import Control.Monad (void)
 
-import Data.Char (ord)
+import Data.Char (ord, chr)
 import Data.Foldable (foldl')
 import Data.Kind (Type)
+import Data.List (elemIndex)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Void (Void)
@@ -58,9 +59,11 @@ parseInteger = do
 
 parseString :: Parser Text
 parseString = do
-  void (char 'S')
   s <- many parseChar -- not sure: `many` or `some`
   pure . T.pack . map (\c -> base94String !! ctoi c) $ s
+
+printString :: Text -> Text
+printString = ("S" <>) . T.map (\c -> maybe '☹' (chr . (+33)) $ c `elemIndex` base94String)
 
 parseUnOp :: Parser UnOp
 parseUnOp = do
