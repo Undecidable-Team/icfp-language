@@ -32,37 +32,32 @@ evalUn env op expr = case (op, eval env expr) of
   (OpNot, VBool b)	-> VBool (not b)
   (OpStringToInt, VString s) -> VInt (strToInt s)
   (OpIntToString, VInt n) -> VString (intToStr n)
-  _			-> error "Invalid type: Not an unary operation."
+  _ -> error "Invalid type: Not an unary operation."
 
 strToInt :: String -> Integer
-strToInt = -- TODO
+-- strToInt = -- TODO
 
 intToStr :: Integer -> String
-intToSTr = -- TODO
+-- intToSTr = -- TODO
 
 -- Evaluates Binary Operations
 evalBin :: Env -> BiOp -> Expr -> Expr -> Expr -> Expr
-evalBin env op e1 e2 = case (op, e1, e2) of
+evalBin env op e1 e2 = case (op, eval e1, eval e2) of
   (OpAdd, VInt n1, VInt n2)	-> VInt (n1 + n2)
   (OpAdd, VInt n1, VInt n2)	-> VInt (n1 - n2)
   (OpMul, VInt n1, VInt n2)	-> VInt (n1 * n2)
-  (OpDiv, VInt n1, VInt n2)	-> VInt (n1 / n2)
+  (OpDiv, VInt n1, VInt n2)	-> VInt (n1 `div` n2)
   (OpMod, VInt n1, VInt n2)	-> VInt (n1 `mod` n2)
   (OpLT, VInt n1, VInt n2)	-> VInt (n1 < n2)
   (OpGT, VInt n1, VInt n2)	-> VInt (n1 > n2)
-  (OpEQ, e1, e2)	-> VBool (e1 == e2)
+  (OpEQ, e1', e2')	-> VBool (e1' == e2')
   (OpOr, VBool b1, VBool b2)	-> VBool (b1 || b2)
   (OpAnd, VBool b1, VBool b2)	-> VBool (b1 && b2)
   (OpConcat, VString s1, VString s2) -> VString (s1 ++ s2)
   (OpTake, VInt n, VString s) -> VString (take n s)
   (OpDrop, VInt n, VString s) -> VString (drop n s)
-  (OpApp, VLam name t body, arg) -> eval (ExtendEnv env name arg) body
-  (OnApp, f, x) ->
-    let f = eval env f
-        x = eval env x
-     in case f of
-      	 VLam name t body -> eval (extendEnv env name arg) body
-         		  -> error "Invalid type: Applied function is not valid lambda expression"
+  (OpApp, VLam name _ body, arg) -> eval env (extendEnv env name arg) body
+  _ -> error "Invalid type: Applied function is not valid lambda expression"
 
 -- Looking up variables in environment
 lookupEnv :: Env -> Name -> Expr
@@ -84,9 +79,10 @@ eval env expr = case expr of
   VInt n -> VInt n
   VVar name -> lookupEnv env name
   VLam name t body -> VLam name t body
-  VApp e1 e2 -> case eval env e1 of
-                  VLam name t body -> eval (extendEnv env name e2) body
-                                   -> error "Invalid type: Not an application."
+  VApp e1 e2 ->
+    case eval env e1 of
+      VLam name t body -> eval (extendEnv env name e2) body
+      _  -> error "Invalid type: Not an application."
   VIf cond t e      -> if evalBool env cond then eval env t else eval env e
   VString s -> VString s
   VUnary op e -> evalUn env op e
