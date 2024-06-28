@@ -20,7 +20,9 @@ common warnings
 library
   import:          defaults, warnings
   exposed-modules: Lib
+                 , Types
   build-depends:   base >=4.7 && <5
+                 , text >=2.1
   hs-source-dirs:  src
 
 executable icfp-language
