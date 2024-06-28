@@ -4,6 +4,12 @@ module Types where
 
 import Data.Text (Text)
 
+data Type
+  = TBool
+  | TInt
+  | TArrow Type Type
+  deriving (Eq,Show,Read)
+
 data Expr
   = VBool Bool
   | VInt Integer
@@ -11,7 +17,8 @@ data Expr
   | VUnary UnOp Expr
   | VBinary BiOp Expr Expr
   | VIf Expr Expr Expr
-  | VLam Name Expr
+  | VLam Name Type Expr -- Type for annotations to λ-terms
+  | VApp Expr Expr
   | VVar Name
   | VOther -- for the future
   deriving (Eq,Show,Read)
