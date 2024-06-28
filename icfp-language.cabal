@@ -20,11 +20,17 @@ common warnings
 
 library
   import:          defaults, warnings
-  exposed-modules: Lib
-                 , Types
-                 , Eval
-  build-depends:   base >=4.7 && <5
-                 , text >=2.1
+  exposed-modules:
+    Eval
+    Lib
+    Parser
+    Types
+
+  build-depends:
+    , base        >=4.7   && <5
+    , megaparsec  >=9.6.1
+    , text        >=2.1
+
   hs-source-dirs:  src
 
 executable icfp-language
@@ -42,9 +48,9 @@ test-suite icfp-language-test
   hs-source-dirs: test
   main-is:        Main.hs
   build-depends:
-    , base           >=4.7 && <5
+    , base              >=4.7  && <5
     , icfp-language
-    , tasty >= 1.5
-    , tasty-hunit >= 0.10
-    , tasty-quickcheck >= 0.11
-    , QuickCheck >= 2.15
+    , QuickCheck        >=2.15
+    , tasty             >=1.5
+    , tasty-hunit       >=0.10
+    , tasty-quickcheck  >=0.11

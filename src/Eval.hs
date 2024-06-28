@@ -64,7 +64,7 @@ evalBin env op e1 e2 = case (op, eval env e1, eval env e2) of
   (OpConcat, VString s1, VString s2) -> VString (s1 <> s2)
   (OpTake, VInt n, VString s) -> VString (T.take (fromInteger n) s)
   (OpDrop, VInt n, VString s) -> VString (T.drop (fromInteger n) s)
-  (OpApp, VLam name _ body, arg) -> eval (extendEnv env name arg) body
+  (OpApp, VLam name body, arg) -> eval (extendEnv env name arg) body
   _ -> error "Invalid type: Applied function is not valid lambda expression"
 
 -- Looking up variables in environment
@@ -86,7 +86,7 @@ eval env expr = case expr of
   VBool b -> VBool b
   VInt n -> VInt n
   VVar name -> lookupEnv env name
-  VLam name t body -> VLam name t body
+  VLam name body -> VLam name body
   VIf cond t e      -> if evalBool env cond then eval env t else eval env e
   VString s -> VString s
   VUnary op e -> evalUn env op (eval env e)
