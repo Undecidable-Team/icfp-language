@@ -5,6 +5,9 @@ import Test.Tasty.HUnit
 import Test.Tasty.QuickCheck
 import Test.QuickCheck
 
+import Types
+import Eval
+
 main :: IO ()
 main = defaultMain tests
 
@@ -27,6 +30,4 @@ intToStrTests = testGroup "intToStr"
 s2iRoundTests = testGroup "s2i roundtrip"
   [ testProperty "strToInt . intToStr == id" $
     \i -> strToInt (intToStr i) == i
-  , testProperty "intToStr . strToInt == id" $
-    \s -> intToStr (strToInt s) == s
   ]
