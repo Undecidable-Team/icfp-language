@@ -113,8 +113,7 @@ eval env expr = case expr of
   VUnary op e -> evalUn env op (eval env e)
   VBinary OpApp e1 e2 -> case eval env e1 of
     VLam name body -> let
-      arg = eval env e2
-      body' = subst name arg body
+      body' = subst name e2 body
       in eval env body'
     _ -> error "Invalid type: Applied function is not valid lambda expression"
   VBinary op e1 e2 -> evalBin env op (eval env e1) (eval env e2)
