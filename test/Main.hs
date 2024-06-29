@@ -206,7 +206,7 @@ fullTest = testCase "get language_test" $ let
           (VString "binary D is not correct"))
         (VString "application is not correct"))
       (VString "application is not correct")
-  in eval [] e @?= VString "solve language_test ANSWER_HERE"
+  in eval [] e @?= VString "Self-check OK, send `solve language_test 4w3s0m3` to claim points for it"
 
 parserTests :: TestTree
 parserTests = testGroup "Parser"
