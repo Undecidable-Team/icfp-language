@@ -111,6 +111,41 @@ lambdaTests = testGroup "Lambda eval"
         (VBinary OpMul (VInt 3) (VInt 2))))
       (VVar (Name {unName = 23}))) @?=
     VInt 12
+  , testCase "109 beta-reductions" $
+    eval []
+    (VBinary OpApp
+     (VBinary OpApp
+      (VLam (Name {unName = 1})
+       (VBinary OpApp
+        (VLam (Name {unName = 2})
+         (VBinary OpApp
+          (VVar (Name {unName = 1}))
+          (VBinary OpApp (VVar (Name {unName = 2}))
+           (VVar (Name {unName = 2})))))
+         (VLam (Name {unName = 2})
+          (VBinary OpApp
+           (VVar (Name {unName = 1}))
+           (VBinary OpApp
+            (VVar (Name {unName = 2}))
+            (VVar (Name {unName = 2})))))))
+       (VLam (Name {unName = 1})
+        (VLam (Name {unName = 2})
+         (VIf (VBinary OpEQ (VVar (Name {unName = 2})) (VInt 0))
+          (VInt 1)
+          (VBinary OpApp
+           (VLam (Name {unName = 3})
+            (VBinary OpAdd
+             (VBinary OpApp
+              (VVar (Name {unName = 1}))
+              (VVar (Name {unName = 3})))
+              (VBinary OpApp
+               (VVar (Name {unName = 1}))
+               (VVar (Name {unName = 3})))))
+            (VBinary OpSub
+             (VVar (Name {unName = 2}))
+             (VInt 1)))))))
+      (VInt 4)) @?=
+    VInt 16
   ]
 
 fullTest = testCase "get language_test" $ let
