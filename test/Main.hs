@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main (main) where
 
 import Test.Tasty
@@ -5,6 +7,7 @@ import Test.Tasty.HUnit
 import Test.Tasty.QuickCheck
 import Test.QuickCheck
 
+import Parser
 import Types
 import Eval
 
@@ -14,10 +17,8 @@ main = defaultMain tests
 tests :: TestTree
 tests = testGroup "Tests"
   [ evalTests
-  , parseTests
+  , parserTests
   ]
-
-parseTests = testGroup "Parse" []
 
 evalTests = testGroup "Eval"
   [ strToIntTests
@@ -87,3 +88,78 @@ ifTests = testGroup "If eval"
 
 lambdaTests = testGroup "Lambda eval"
   []
+
+parserTests :: TestTree
+parserTests = testGroup "Parser"
+  [ parseBoolTests
+  , parseIntegerTests
+  , parseStringTests
+  , parseUnOpTests
+  , parseBiOpTests
+  , parseIfTests
+  , parseLamTests
+  , parseVarTests
+  ]
+
+parseBoolTests :: TestTree
+parseBoolTests = testGroup "parseBool"
+  [ testCase "spec: T" $ readWithParser parseBool "T" @?= Right (VBool True)
+  , testCase "spec: F" $ readWithParser parseBool "F" @?= Right (VBool False)
+  ]
+
+parseIntegerTests :: TestTree
+parseIntegerTests = testGroup "parseInteger"
+  [ testCase "spec: I!" $ readWithParser parseInteger "I!" @?= Right (VInt 0)
+  , testCase "spec: I\"" $ readWithParser parseInteger "I\"" @?= Right (VInt 1)
+  , testCase "spec: I/6" $ readWithParser parseInteger "I/6" @?= Right (VInt 1337)
+  , testCase "spec: I#" $ readWithParser parseInteger "I#" @?= Right (VInt 2)
+  , testCase "spec: I$" $ readWithParser parseInteger "I$" @?= Right (VInt 3)
+  ]
+
+parseStringTests :: TestTree
+parseStringTests = testGroup "parseString"
+  [ testCase "spec: SB%,,/}Q/2,$_" $ readWithParser parseString "SB%,,/}Q/2,$_" @?= Right (VString "Hello World!")
+  ]
+
+parseUnOpTests :: TestTree
+parseUnOpTests = testGroup "parseUnOp"
+  [ testCase "spec: U- I$" $ readWithParser parseUnOp "U- I$" @?= Right (VUnary OpNeg (VInt 3))
+  , testCase "spec: U! T" $ readWithParser parseUnOp "U! T" @?= Right (VUnary OpNot (VBool True))
+  , testCase "spec: U# S4%34" $ readWithParser parseUnOp "U# S4%34" @?= Right (VUnary OpStringToInt (VString "test"))
+  , testCase "spec: U$ I4%34" $ readWithParser parseUnOp "U$ I4%34" @?= Right (VUnary OpIntToString (VInt 15818151))
+  ]
+
+parseBiOpTests :: TestTree
+parseBiOpTests = testGroup "parseBiOp"
+  [ testCase "spec: B+ I# I$" $ readWithParser parseBiOp "B+ I# I$" @?= Right (VBinary OpAdd (VInt 2) (VInt 3))
+  , testCase "spec: B- I$ I#" $ readWithParser parseBiOp "B- I$ I#" @?= Right (VBinary OpSub (VInt 3) (VInt 2))
+  , testCase "spec: B* I$ I#" $ readWithParser parseBiOp "B* I$ I#" @?= Right (VBinary OpMul (VInt 3) (VInt 2))
+  , testCase "spec: B/ U- I( I#" $ readWithParser parseBiOp "B/ U- I( I#" @?= Right (VBinary OpDiv (VUnary OpNeg (VInt 7)) (VInt 2))
+  , testCase "spec: B% U- I( I#" $ readWithParser parseBiOp "B% U- I( I#" @?= Right (VBinary OpMod (VUnary OpNeg (VInt 7)) (VInt 2))
+  , testCase "spec: B< I$ I#" $ readWithParser parseBiOp "B< I$ I#" @?= Right (VBinary OpLT (VInt 3) (VInt 2))
+  , testCase "spec: B> I$ I#" $ readWithParser parseBiOp "B> I$ I#" @?= Right (VBinary OpGT (VInt 3) (VInt 2))
+  , testCase "spec: B= I$ I#" $ readWithParser parseBiOp "B= I$ I#" @?= Right (VBinary OpEQ (VInt 3) (VInt 2))
+  , testCase "spec: B| T F" $ readWithParser parseBiOp "B| T F" @?= Right (VBinary OpOr (VBool True) (VBool False))
+  , testCase "spec: B& T F" $ readWithParser parseBiOp "B& T F" @?= Right (VBinary OpAnd (VBool True) (VBool False))
+  , testCase "spec: B. S4% S34" $ readWithParser parseBiOp "B. S4% S34" @?= Right (VBinary OpConcat (VString "te") (VString "st"))
+  , testCase "spec: BT I$ S4%34" $ readWithParser parseBiOp "BT I$ S4%34" @?= Right (VBinary OpTake (VInt 3) (VString "test"))
+  , testCase "spec: BD I$ S4%34" $ readWithParser parseBiOp "BD I$ S4%34" @?= Right (VBinary OpDrop (VInt 3) (VString "test"))
+  ]
+
+parseIfTests :: TestTree
+parseIfTests = testGroup "parseIf"
+  [ testCase "spec: ? B> I# I$ S9%3 S./" $
+      readWithParser parseIf "? B> I# I$ S9%3 S./" @?= Right (VIf (VBinary OpGT (VInt 2) (VInt 3)) (VString "yes") (VString "no"))
+  ]
+
+parseLamTests :: TestTree
+parseLamTests = testGroup "parseLam"
+  [ testCase "spec: B$ B$ L# L$ v# B. SB%,,/ S}Q/2,$_ IK" $
+      readWithParser parseBiOp "B$ B$ L# L$ v# B. SB%,,/ S}Q/2,$_ IK"
+        @?= Right (VBinary OpApp (VBinary OpApp (VLam (Name 2) (VLam (Name 3) (VVar (Name 2)))) (VBinary OpConcat (VString "Hello") (VString " World!"))) (VInt 42))
+  ]
+
+parseVarTests :: TestTree
+parseVarTests = testGroup "parseVar"
+  [ testCase "spec: v#" $ readWithParser parseVar "v#" @?= Right (VVar (Name 2))
+  ]

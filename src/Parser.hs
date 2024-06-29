@@ -25,6 +25,9 @@ type Parser = Parsec Void Text
 readExpr :: Text -> Either String Expr
 readExpr = first errorBundlePretty . parse parseExpr ""
 
+readWithParser :: Parser a -> Text -> Either String a
+readWithParser parser = first errorBundlePretty . parse parser ""
+
 parseExpr :: Parser Expr
 parseExpr =
   choice
