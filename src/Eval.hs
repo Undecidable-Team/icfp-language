@@ -32,8 +32,9 @@ evalBool env expr = case expr of
 
 -- Evaluates Integer expressions
 evalInt :: Env -> Expr -> Integer -- Note that `Int' only uses fixed-precision ones, while `Integer' type has arbitrary-precision.
-evalInt env (VInt n) = n
-evalInt _ _ = error "Invalid type: This is not an integer expression!"
+evalInt env e = case eval env e of
+  VInt n -> n
+  _ -> error "Invalid type: This is not an integer expression!"
 
 -- Evaluates Unary Operations
 evalUn :: Env -> UnOp -> Expr -> Expr
@@ -70,8 +71,6 @@ evalBin env op e1 e2 = case (op, eval env e1, eval env e2) of
   (OpConcat, VString s1, VString s2) -> VString (s1 <> s2)
   (OpTake, VInt n, VString s) -> VString (T.take (fromInteger n) s)
   (OpDrop, VInt n, VString s) -> VString (T.drop (fromInteger n) s)
-  (OpApp, VLam name body, arg) -> eval (extendEnv env name arg) body
-  _ -> error "Invalid type: Applied function is not valid lambda expression"
 
 -- Looking up variables in environment
 lookupEnv :: Env -> Name -> Expr
@@ -87,14 +86,36 @@ extendEnv env name value = (name, value) : env
 
 -- The main evaluation funciton
 
+subst :: Name -> Expr -> Expr -> Expr
+subst name v = \case
+  VBool b -> VBool b
+  VInt i -> VInt i
+  VString s -> VString s
+  VUnary op e -> VUnary op $ subst name v e
+  VBinary op e1 e2 -> VBinary op (subst name v e1) (subst name v e2)
+  VIf c t e -> VIf (subst name v c) (subst name v t) (subst name v e)
+  VLam n b
+    | n == name -> VLam n b
+    | otherwise -> VLam n (subst name v b)
+  VVar n
+    | n == name -> v
+    | otherwise -> VVar n
+  VOther -> VOther
+
 eval :: Env -> Expr -> Expr
 eval env expr = case expr of
   VBool b -> VBool b
   VInt n -> VInt n
-  VVar name -> lookupEnv env name
+  VVar name -> VVar name
   VLam name body -> VLam name body
   VIf cond t e      -> if evalBool env cond then eval env t else eval env e
   VString s -> VString s
   VUnary op e -> evalUn env op (eval env e)
+  VBinary OpApp e1 e2 -> case eval env e1 of
+    VLam name body -> let
+      arg = eval env e2
+      body' = subst name arg body
+      in eval env body'
+    _ -> error "Invalid type: Applied function is not valid lambda expression"
   VBinary op e1 e2 -> evalBin env op (eval env e1) (eval env e2)
   VOther -> error "Expression type not supported."
