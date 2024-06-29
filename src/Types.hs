@@ -17,13 +17,13 @@ data Expr
   | VUnary UnOp Expr
   | VBinary BiOp Expr Expr
   | VIf Expr Expr Expr
-  | VLam Name Expr -- Type for annotations to λ-terms
+  | VLam Name Expr
   | VVar Name
   | VOther -- for the future
   deriving (Eq,Show,Read)
 
 newtype Name = Name { unName :: Integer }
-  deriving (Eq,Show,Read)
+  deriving (Eq,Show,Read,Ord)
 
 data UnOp
   = OpNeg
