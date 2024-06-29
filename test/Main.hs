@@ -64,6 +64,22 @@ binaryTests = testGroup "Binary ops"
     eval [] (VBinary OpDiv (VUnary OpNeg (VInt 7)) (VInt 2)) @?= VInt (-3)
   , testCase "B% U- I( I# -> -3" $
     eval [] (VBinary OpMod (VUnary OpNeg (VInt 7)) (VInt 2)) @?= VInt (-1)
+  , testCase "B< I$ I# -> false" $
+    eval [] (VBinary OpLT (VInt 4) (VInt 3)) @?= VBool False
+  , testCase "B> I$ I# -> false" $
+    eval [] (VBinary OpGT (VInt 4) (VInt 3)) @?= VBool True
+  , testCase "B= I$ I# -> false" $
+    eval [] (VBinary OpEQ (VInt 4) (VInt 3)) @?= VBool False
+  , testCase "B| T F -> true" $
+    eval [] (VBinary OpOr (VBool True) (VBool False)) @?= VBool True
+  , testCase "B& T F -> true" $
+    eval [] (VBinary OpAnd (VBool True) (VBool False)) @?= VBool False
+  , testCase "B. S4% S34 -> test" $
+    eval [] (VBinary OpConcat (VString "te") (VString "st")) @?= VString "test"
+  , testCase "BT I$ S4%34 -> tes" $
+    eval [] (VBinary OpTake (VInt 3) (VString "test")) @?= VString "tes"
+  , testCase "BD I$ S4%34 -> t" $
+    eval [] (VBinary OpDrop (VInt 3) (VString "test")) @?= VString "t"
   ]
 
 ifTests = testGroup "If eval"
