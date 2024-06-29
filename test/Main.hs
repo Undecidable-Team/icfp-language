@@ -99,6 +99,18 @@ lambdaTests = testGroup "Lambda eval"
           (VVar (Name {unName = 2}))))
         (VBinary OpConcat (VString "Hello") (VString " World!")))
       (VInt 42)) @?= VString "Hello World!"
+  , testCase "B$ L# B$ L\" B+ v\" v\" B* I$ I# v8" $
+    eval []
+    (VBinary OpApp
+     (VLam (Name {unName = 2})
+      (VBinary OpApp
+       (VLam (Name {unName = 1})
+        (VBinary OpAdd
+         (VVar (Name {unName = 1}))
+         (VVar (Name {unName = 1}))))
+        (VBinary OpMul (VInt 3) (VInt 2))))
+      (VVar (Name {unName = 23}))) @?=
+    VInt 12
   ]
 
 fullTest = testCase "get language_test" $ let
