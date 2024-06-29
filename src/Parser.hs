@@ -7,7 +7,7 @@ import Types (BiOp (..), Expr (..), Name (..), UnOp (..))
 import Control.Monad (void)
 
 import Data.Bifunctor (first)
-import Data.Char (ord, chr)
+import Data.Char (chr, ord)
 import Data.Foldable (foldl')
 import Data.Kind (Type)
 import Data.List (elemIndex)
@@ -16,7 +16,7 @@ import Data.Text qualified as T
 import Data.Void (Void)
 
 import Text.Megaparsec
-import Text.Megaparsec.Char
+import Text.Megaparsec.Char (char, space1)
 import Text.Megaparsec.Char.Lexer qualified as L
 
 type Parser :: Type -> Type
@@ -28,18 +28,21 @@ readExpr = first errorBundlePretty . parse parseExpr ""
 parseExpr :: Parser Expr
 parseExpr =
   choice
-    [ try (VBool <$> parseBool)
-    , try (char 'I' >> (VInt <$> parseInteger))
-    , try (char 'S' >> (VString <$> parseString))
-    , try (char 'U' >> (VUnary <$> parseUnOp <*> (sc >> parseExpr)))
-    , try (char 'B' >> (VBinary <$> parseBiOp <*> (sc >> parseExpr) <*> (sc >> parseExpr)))
-    , try (char '?' >> (VIf <$> (sc >> parseExpr) <*> (sc >> parseExpr) <*> (sc >> parseExpr)))
-    , try (char 'L' >> (VLam <$> (sc >> parseName) <*> (sc >> parseExpr)))
-    , try (char 'v' >> (VVar <$> parseName))
+    [ try parseBool
+    , try parseInteger
+    , try parseString
+    , try parseUnOp
+    , try parseBiOp
+    , try parseIf
+    , try parseLam
+    , try parseVar
     ]
 
-parseBool :: Parser Bool
-parseBool = (True <$ char 'T') <|> (False <$ char 'F')
+parseBool :: Parser Expr
+parseBool = VBool <$> parseBoolBody
+
+parseBoolBody :: Parser Bool
+parseBoolBody = (True <$ char 'T') <|> (False <$ char 'F')
 
 ctoi :: Char -> Int
 ctoi c = ord c - ord '!'
@@ -53,24 +56,40 @@ base94String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\
 parseChar :: Parser Char
 parseChar = oneOf base94Char -- maybe use `satisfy`?
 
-parseInteger :: Parser Integer
+parseInteger :: Parser Expr
 parseInteger = do
+  void (char 'I')
+  VInt <$> parseIntegerBody
+
+parseIntegerBody :: Parser Integer
+parseIntegerBody = do
   s <- some parseChar
   pure . buildBase94 . map ctoi $ s
  where
   buildBase94 :: [Int] -> Integer
   buildBase94 = foldl' (\acc curr -> acc * 94 + fromIntegral curr) 0
 
-parseString :: Parser Text
+parseString :: Parser Expr
 parseString = do
+  void (char 'S')
+  VString <$> parseStringBody
+
+parseStringBody :: Parser Text
+parseStringBody = do
   s <- many parseChar -- not sure: `many` or `some`
   pure . T.pack . map (\c -> base94String !! ctoi c) $ s
 
 printString :: Text -> Text
-printString = ("S" <>) . T.map (\c -> maybe '☹' (chr . (+33)) $ c `elemIndex` base94String)
+printString = ("S" <>) . T.map (\c -> maybe '☹' (chr . (+ 33)) $ c `elemIndex` base94String)
 
-parseUnOp :: Parser UnOp
+parseUnOp :: Parser Expr
 parseUnOp = do
+  void (char 'U')
+  body <- parseUnOpBody
+  VUnary body <$> (sc >> parseExpr)
+
+parseUnOpBody :: Parser UnOp
+parseUnOpBody = do
   choice
     [ OpNeg <$ char '-'
     , OpNot <$ char '!'
@@ -78,8 +97,14 @@ parseUnOp = do
     , OpIntToString <$ char '$'
     ]
 
-parseBiOp :: Parser BiOp
+parseBiOp :: Parser Expr
 parseBiOp = do
+  void (char 'B')
+  body <- parseBiOpBody
+  VBinary body <$> (sc >> parseExpr) <*> (sc >> parseExpr)
+
+parseBiOpBody :: Parser BiOp
+parseBiOpBody = do
   choice
     [ OpAdd <$ char '+'
     , OpSub <$ char '-'
@@ -97,8 +122,23 @@ parseBiOp = do
     , OpApp <$ char '$'
     ]
 
-parseName :: Parser Name
-parseName = Name <$> parseInteger
+parseIf :: Parser Expr
+parseIf = do
+  void (char '?')
+  VIf <$> (sc >> parseExpr) <*> (sc >> parseExpr) <*> (sc >> parseExpr)
+
+parseLam :: Parser Expr
+parseLam = do
+  void (char 'L')
+  VLam <$> (sc >> parseVarBody) <*> (sc >> parseExpr)
+
+parseVar :: Parser Expr
+parseVar = do
+  void (char 'v')
+  VVar <$> parseVarBody
+
+parseVarBody :: Parser Name
+parseVarBody = Name <$> parseIntegerBody
 
 sc :: Parser ()
 sc = L.space space1 empty empty
