@@ -84,10 +84,21 @@ binaryTests = testGroup "Binary ops"
   ]
 
 ifTests = testGroup "If eval"
-  []
+  [ testCase "? B> I# I$ S9%3 S./" $
+    eval [] (VIf (VBinary OpGT (VInt 2) (VInt 3)) (VString "yes") (VString "no")) @?= VString "no"
+  ]
 
 lambdaTests = testGroup "Lambda eval"
-  []
+  [ testCase "B$ B$ L# L$ v# B. SB%,,/ S}Q/2,$_ IK" $
+    eval []
+    (VBinary OpApp
+      (VBinary OpApp
+        (VLam (Name {unName = 2})
+         (VLam (Name {unName = 3})
+          (VVar (Name {unName = 2}))))
+        (VBinary OpConcat (VString "Hello") (VString " World!")))
+      (VInt 42)) @?= VString "Hello World!"
+  ]
 
 parserTests :: TestTree
 parserTests = testGroup "Parser"
