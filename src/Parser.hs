@@ -6,6 +6,7 @@ import Types (BiOp (..), Expr (..), Name (..), UnOp (..))
 
 import Control.Monad (void)
 
+import Data.Bifunctor (first)
 import Data.Char (ord, chr)
 import Data.Foldable (foldl')
 import Data.Kind (Type)
@@ -20,6 +21,9 @@ import Text.Megaparsec.Char.Lexer qualified as L
 
 type Parser :: Type -> Type
 type Parser = Parsec Void Text
+
+readExpr :: Text -> Either String Expr
+readExpr = first errorBundlePretty . parse parseExpr ""
 
 parseExpr :: Parser Expr
 parseExpr =

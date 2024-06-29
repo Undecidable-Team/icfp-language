@@ -39,6 +39,9 @@ executable icfp-language
   build-depends:
     , base           >=4.7 && <5
     , icfp-language
+    , lens >=5
+    , text >=2.1
+    , wreq >=0.5
 
   hs-source-dirs: app
 
