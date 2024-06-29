@@ -32,7 +32,7 @@ evalTests = testGroup "Eval"
   ]
 
 strToIntTests = testGroup "strToInt"
-  [ testCase "spec: S4%34" $ strToInt "4%34" @?= 15818151 ]
+  [ testCase "spec: S4%34" $ strToInt "test" @?= 15818151 ]
 
 intToStrTests = testGroup "intToStr"
   [ testCase "spec: I4%34" $ intToStr 15818151 @?= "test" ]
@@ -48,11 +48,9 @@ unaryTests = testGroup "Unary ops"
   , testCase "U! T -> false" $
     eval [] (VUnary OpNot (VBool True)) @?= VBool False
   , testCase "U# S4%34 -> 15818151" $
-    eval [] (VUnary OpStringToInt (VString "4%34")) @?= VInt 15818151
-
-    -- TODO: is this test correct?
+    eval [] (VUnary OpStringToInt (VString "test")) @?= VInt 15818151
   , testCase "U$ I4%34 -> test" $
-    eval [] (VUnary OpIntToString (VInt 15818151)) @?= VString "4%34"
+    eval [] (VUnary OpIntToString (VInt 15818151)) @?= VString "test"
   ]
 
 binaryTests = testGroup "Binary ops"

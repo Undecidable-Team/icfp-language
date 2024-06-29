@@ -3,6 +3,8 @@ module Eval where
 import Types
 
 import Data.Char (ord, chr)
+import Data.List (elemIndex)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 
@@ -47,13 +49,16 @@ evalUn env op expr = case (op, eval env expr) of
 
 strToInt :: Text -> Integer
 strToInt = T.foldl step 0
-  where step x c = x*94 + toInteger (ord c - 33)
+  where step x c = x*94 + toInteger (idx c)
+        alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`|~ \n"
+        idx c = fromMaybe (error "Wrong symbol") $ elemIndex c alphabet
 
 intToStr :: Integer -> Text
 intToStr = T.reverse . T.unfoldr step
   where step = \case
           0 -> Nothing
-          x -> Just (chr $ fromInteger $ 33 + x`mod`94, x`div`94)
+          x -> Just (alphabet !! fromInteger (x`mod`94), x`div`94)
+        alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`|~ \n"
 
 -- Evaluates Binary Operations
 evalBin :: Env -> BiOp -> Expr -> Expr -> Expr
