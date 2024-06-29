@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Types
 import Parser
 
 import Control.Lens
@@ -23,12 +24,15 @@ send tok input = do
 
 go :: Text -> IO ()
 go tok = do
-  T.putStrLn "> "
+  T.putStr "> "
+  hFlush stdout
   s <- T.getLine
+  T.putStrLn ""
   t <- send tok $ printString s
   case readExpr <$> t of
     Nothing -> T.putStrLn "SOMETHING WENT WRONG"
     Just (Left err) -> T.putStrLn "PARSE ERROR: " >> print err
+    Just (Right (VString s)) -> T.putStrLn s
     Just (Right ex) -> print ex
   go tok
 
