@@ -23,6 +23,7 @@ library
   exposed-modules:
     Efficiency
     Eval
+    Eval.CallByNeed
     Lib
     Parser
     Types
