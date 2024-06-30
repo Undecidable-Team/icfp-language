@@ -29,10 +29,13 @@ library
     Types
 
   build-depends:
-    , base        >=4.7   && <5
-    , containers  >=0.6.7
-    , megaparsec  >=9.6.1
-    , text        >=2.1
+    , base               >=4.7   && <5
+    , containers         >=0.6.7
+    , megaparsec         >=9.6.1
+    , mtl
+    , text               >=2.1
+    , vector
+    , vector-hashtables
 
   hs-source-dirs:  src
 
