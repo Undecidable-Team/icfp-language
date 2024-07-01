@@ -6,6 +6,7 @@ import Types (BiOp (..), Expr (..), Name (..), UnOp (..))
 import Control.Applicative (Applicative (liftA2))
 import Control.Monad.Except (ExceptT, MonadError (throwError), runExceptT)
 import Control.Monad.State.Strict (StateT (runStateT), get)
+import Control.Monad.ST.Strict (ST, runST)
 
 import Data.Kind (Type)
 import Data.List (elemIndex)
@@ -18,11 +19,11 @@ import Data.Vector.Mutable qualified as VM
 type Thunk :: Type
 data Thunk = Unevaluated Expr | Evaluated Expr
 
-type HashTable :: Type -> Type -> Type
-type HashTable k v = H.Dictionary (H.PrimState IO) VM.MVector k VM.MVector v
+type HashTable :: Type -> Type -> Type -> Type
+type HashTable s k v = H.Dictionary (H.PrimState (ST s)) VM.MVector k VM.MVector v
 
-type Env :: Type
-type Env = HashTable Integer Thunk
+type Env :: Type -> Type
+type Env s = HashTable s Integer Thunk
 
 type EvalError :: Type
 data EvalError
@@ -31,8 +32,8 @@ data EvalError
   | UndefinedBehavior
   deriving stock (Show)
 
-type EvalM :: Type -> Type
-type EvalM a = ExceptT EvalError (StateT Env IO) a
+type EvalM :: Type -> Type -> Type
+type EvalM s a = ExceptT EvalError (StateT (Env s) (ST s)) a
 
 strToInt :: Text -> Integer
 strToInt = T.foldl step 0
@@ -47,7 +48,7 @@ intToStr = T.reverse . T.unfoldr step
     0 -> Nothing
     x -> Just (base94String !! fromInteger (x `mod` 94), x `div` 94)
 
-evalWithEnv :: Expr -> EvalM Expr
+evalWithEnv :: Expr -> EvalM s Expr
 evalWithEnv expr = case expr of
   VBool _ -> pure expr
   VInt _ -> pure expr
@@ -78,7 +79,7 @@ evalWithEnv expr = case expr of
       Nothing -> throwError $ UnboundVariable name
   VOther -> throwError UndefinedBehavior
 
-evalWithEnvUnOp :: UnOp -> Expr -> EvalM Expr
+evalWithEnvUnOp :: UnOp -> Expr -> EvalM s Expr
 evalWithEnvUnOp op expr =
   evalWithEnv expr >>= \r -> case (op, r) of
     (OpNeg, VInt n) -> pure . VInt . negate $ n
@@ -87,7 +88,7 @@ evalWithEnvUnOp op expr =
     (OpIntToString, VInt n) -> pure . VString . intToStr $ n
     _ -> throwError $ TypeError "Not an unary operation" (VUnary op expr)
 
-evalWithEnvBin :: BiOp -> Expr -> Expr -> EvalM Expr
+evalWithEnvBin :: BiOp -> Expr -> Expr -> EvalM s Expr
 evalWithEnvBin op ea eb = do
   lhs <- evalWithEnv ea
   rhs <- evalWithEnv eb
@@ -107,7 +108,7 @@ evalWithEnvBin op ea eb = do
     (OpDrop, VInt n, VString s) -> pure $ VString (T.drop (fromInteger n) s)
     (op', ea', eb') -> throwError $ TypeError "Unsupported binary operation" (VBinary op' ea' eb')
 
-evalWithEnvBool :: Expr -> EvalM Bool
+evalWithEnvBool :: Expr -> EvalM s Bool
 evalWithEnvBool expr = case expr of
   VBool b -> pure b
   VUnary op ea -> case op of
@@ -122,14 +123,14 @@ evalWithEnvBool expr = case expr of
     _ -> throwError $ TypeError "Unsupported Boolean binary operator." (VBinary op ea eb)
   _ -> throwError $ TypeError "Invalid boolean expression." expr
 
-evalWithEnvInt :: Expr -> EvalM Integer
+evalWithEnvInt :: Expr -> EvalM s Integer
 evalWithEnvInt expr =
   evalWithEnv expr >>= \case
     VInt n -> pure n
     expr' -> throwError $ TypeError "Not an integer" expr'
 
-eval :: Expr -> IO (Either EvalError Expr)
-eval expr = do
-  h <- (H.initialize 0 :: IO Env)
+eval :: Expr -> Either EvalError Expr
+eval expr = runST do
+  h <- H.initialize 0
   (r, _) <- runStateT (runExceptT (evalWithEnv expr)) h
   pure r
